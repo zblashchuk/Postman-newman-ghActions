@@ -1,0 +1,41 @@
+name: Run Petstore Postman Tests
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '16.x'
+
+      - name: Install newman
+        run: npm install -g newman
+
+      - name: Install reporter
+        run: npm install -g newman-reporter-htmlextra
+
+      - name: Make Directory for results
+        run: mkdir -p test_results
+
+      - name: Run POSTMAN collection
+        run: newman run petstore.collection.json --reporters cli,htmlextra --reporter-htmlextra-export test_results/index.html 
+
+      # Upload the contents of Test Results directory to workspace
+      - name: Output the run Details
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: reports
+          path: test_results
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: test_results
