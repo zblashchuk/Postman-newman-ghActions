@@ -1,0 +1,45 @@
+name: Run Petstore Postman Tests
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '16.x'
+
+      - name: Install newman
+        run: npm install -g newman
+
+      - name: Install reporter
+        run: npm install -g newman-reporter-htmlextra
+      - name: run store
+        run: npm run tern-on-api 
+     
+      - name: Make Directory for results
+        run: mkdir -p test_resultsStore
+
+      - name: Run POSTMAN collection
+        run: newman run store.postman_collection.json -e store.postman_environment.json --reporters cli,htmlextra --reporter-htmlextra-export test_resultsStore/index1.html 
+
+       - uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: reports
+          path: test_results/
+      - name: Push to repository
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.NEWMAN_TOKEN }}
+        with:
+          source-directory: 'test_results'
+          destination-github-username: 'zblashchuk'
+          destination-repository-name: 'Postman-newman-ghActions'
+          user-email: zblashchuk@gmail.com
+          target-branch: main
