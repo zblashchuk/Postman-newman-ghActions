@@ -3,15 +3,14 @@ on:
   push:
     branches:
       - main
-
+  pull_request:
+    branches: main
 jobs:
   test-api:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Install Node
-        uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
           node-version: '16.x'
 
@@ -21,13 +20,15 @@ jobs:
       - name: Install reporter
         run: npm install -g newman-reporter-htmlextra
 
-      - name: Make Directory for results
-        run: mkdir -p test_results
+      #- name: Make Directory for results
+      #  run: mkdir -p test_results
 
       - name: Run POSTMAN collection
         continue-on-error: true
         run: |
            newman run petstore.collection.json --reporters cli,htmlextra --reporter-htmlextra-export ./test_results/index.html 
+      
+      # 
       - name: Deploy report page
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -35,14 +36,15 @@ jobs:
          publish_dir: ./test_results
          user_name: 'github-actions[bot]'
          user_email: 'github-actions[bot]@users.noreply.github.com'
-      
-      # Upload the contents of Test Results directory to workspace
       - name: Output the run Details
         uses: actions/upload-artifact@v2
+        with:
+          name: testResults
+          path: ./test_results
+      
+      - name: Deploy report
+        uses: JamesIves/github-pages-deploy-action@4.1.4
         if: always()
         with:
-          name: reports
-          path: ./test_results
-
-
-          
+          branch: gh-pages # The branch the action should deploy to.
+          folder: test_results
